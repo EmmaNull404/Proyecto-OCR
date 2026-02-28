@@ -16,7 +16,7 @@ from PyQt6.QtGui import (
     QAction, QFont, QIcon, QPainter, QColor, QPen, QBrush,
     QDragEnterEvent, QDropEvent
 )
-from PyQt6.QtCore import Qt, QSize, QTimer
+from PyQt6.QtCore import Qt, QSize, QTimer, QSettings
 
 from core.ocr_engine import OCRWorker
 from core.utils import load_config
@@ -145,8 +145,11 @@ class MainWindow(QMainWindow):
         self._timer.timeout.connect(self._tick_timer)
 
         self.setWindowTitle("Local OCR Pro")
-        self.setMinimumSize(1200, 750)
+
+        self.setMinimumSize(350, 500)
+        # self.resize(1200, 750)
         self.setWindowIcon(cargar_icono())
+        self._settings = QSettings("Emmanuel", "ProyectoOCR")
 
         # Construir widgets antes de _build_ui para que estén disponibles
         self._texto   = QTextEdit()
@@ -171,6 +174,11 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
         self._aplicar_estilos_tema()
+
+    def closeEvent(self, event):
+        self._settings.setValue("splitter_state", self._splitter.saveState())
+        self._settings.setValue("window_geometry", self.saveGeometry())
+        super().closeEvent(event)
 
     # ────────────────────────────────────────────────────────────
     #  CORRECCIÓN 1: QSS forzado por tema — elimina fondo blanco
@@ -445,7 +453,7 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(6, 4, 6, 4)
         lay.setSpacing(4)
 
-        split_h = QSplitter(Qt.Orientation.Horizontal)
+        self._splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Panel izquierdo: árbol + placeholder
         left = QWidget()
@@ -455,7 +463,7 @@ class MainWindow(QMainWindow):
         self._tree.setMinimumHeight(160)
         left_lay.addWidget(self._tree, 2)
         left_lay.addWidget(self._preview, 3)
-        split_h.addWidget(left)
+        self._splitter.addWidget(left)
 
         # Panel derecho: texto extraído
         right = QWidget()
@@ -476,11 +484,20 @@ class MainWindow(QMainWindow):
         btn_row.addWidget(btn_lim)
         btn_row.addStretch()
         right_lay.addLayout(btn_row)
-        split_h.addWidget(right)
+        self._splitter.addWidget(right)
 
-        split_h.setSizes([420, 780])
-        split_h.setStretchFactor(1, 1)
-        lay.addWidget(split_h)
+        self._splitter.setSizes([420, 780])
+        self._splitter.setStretchFactor(1, 1)
+        lay.addWidget(self._splitter)
+
+        # 👇 ESTO VA AL FINAL
+        state = self._settings.value("splitter_state")
+        if state:
+            self._splitter.restoreState(state)
+
+        geo = self._settings.value("window_geometry")
+        if geo:
+            self.restoreGeometry(geo)
 
         # ── Status bar ───────────────────────────────────────────
         self._status_lbl = QLabel("Listo.")
