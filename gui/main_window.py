@@ -174,6 +174,7 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
         self._aplicar_estilos_tema()
+        self._actualizar_iconos_tema()
 
     def closeEvent(self, event):
         self._settings.setValue("splitter_state", self._splitter.saveState())
@@ -239,8 +240,8 @@ class MainWindow(QMainWindow):
                 padding: 6px 16px;
                 font-weight: bold;
             }}
-            QPushButton:hover  {{ background-color: {p['brd']}; color: {p['fg']}; }}
-            QPushButton:disabled {{ background-color: {p['brd']}; color: #777; }}
+            QPushButton:hover  {{ background-color: #ff551b; color: {p['fg']}; }}
+                        QPushButton:disabled {{ background-color: {p['brd']}; color: #777; }}
 
             /* ── CORRECCIÓN CLAVE: QTreeWidget sin fondo blanco ── */
             QTreeWidget {{
