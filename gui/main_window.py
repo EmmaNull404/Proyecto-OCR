@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
             QHeaderView::section {{
                 background-color: {p['head']};
                 color: {p['fg']};
-                padding: 5px 8px;
+                padding: 1px 8px;
                 border: 1px solid {p['brd']};
                 font-weight: bold;
             }}
@@ -459,9 +459,9 @@ class MainWindow(QMainWindow):
         right_lay = QVBoxLayout(right)
         right_lay.setContentsMargins(0, 0, 0, 0)
         right_lay.setSpacing(4)
-        lbl = QLabel("Texto extraído:")
-        lbl.setFont(QFont("Segoe UI", 9))
-        right_lay.addWidget(lbl)
+        self._lbl_texto = QLabel("  Texto extraído")
+        self._lbl_texto.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+        right_lay.addWidget(self._lbl_texto)
         right_lay.addWidget(self._texto)
         btn_row = QHBoxLayout()
         btn_cop = QPushButton("Copiar todo")
@@ -743,6 +743,10 @@ class MainWindow(QMainWindow):
         """Aplica estilos usando una paleta directa (sin leer self._cfg)."""
         self._preview.set_acento(p.get("acento", "#3c7bd4"))
         self.setStyleSheet(self._generar_qss(p))
+        # Cabecera "Texto extraído:" — mismo padding que QHeaderView::section
+        self._lbl_texto.setStyleSheet(
+            f"background-color: {p['head']}; color: {p['fg']}; "
+            f"border: 1px solid {p['brd']}; padding: 6px 8px; font-weight: bold;")
 
     def _actualizar_iconos_tema_con(self, p: dict):
         c = p.get("fg", "#eff0f1")
