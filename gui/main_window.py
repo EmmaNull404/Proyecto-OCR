@@ -22,6 +22,7 @@ from core.ocr_engine import OCRWorker
 from core.utils import load_config
 from assets.themes.themes import get_theme
 from gui.config_dialog import ConfigDialog
+from gui.theme_editor import ThemeEditor, cargar_custom_themes
 from gui.icons import icono
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -183,10 +184,17 @@ class MainWindow(QMainWindow):
     # ── Estilos de tema ──────────────────────────────────────────
     def _aplicar_estilos_tema(self):
         tema = self._cfg.get("tema", "Oscuro")
-        p    = PALETAS.get(tema, PALETAS["Oscuro"])
-        self._preview.set_acento(p["acento"])
+        # Buscar en paletas integradas primero, luego en custom
+        p = PALETAS.get(tema)
+        if p is None:
+            custom = cargar_custom_themes()
+            p = custom.get(tema, PALETAS["Oscuro"])
+            if tema in custom:
+                PALETAS[tema] = p   # cachear para uso posterior
+        self._aplicar_estilos_tema_con(p)
 
-        self.setStyleSheet(f"""
+    def _generar_qss(self, p: dict) -> str:
+        return f"""
             QMainWindow, QDialog, QWidget {{
                 background-color: {p['bg']};
                 color: {p['fg']};
@@ -351,7 +359,7 @@ class MainWindow(QMainWindow):
                 color: {p['fg']};
                 border: 1px solid {p['brd']};
             }}
-        """)
+        """
 
     # ── Build UI ─────────────────────────────────────────────────
     def _build_ui(self):
@@ -414,8 +422,9 @@ class MainWindow(QMainWindow):
         m_proc = mb.addMenu("&Procesar")
         m_proc.addActions([self.a_run, self.a_stop])
 
-        mb.addMenu("&Configuración").addAction(
-            "Preferencias...", self._abrir_config)
+        m_cfg = mb.addMenu("&Configuración")
+        m_cfg.addAction("Preferencias...", self._abrir_config)
+        m_cfg.addAction("Editor de Temas...", self._abrir_editor_temas)
         mb.addMenu("Ay&uda").addAction("Acerca de...", self._acerca)
 
         # Toolbar
@@ -708,6 +717,43 @@ class MainWindow(QMainWindow):
         self.a_sel_all.setIcon(icono("check_all",    c))
         self.a_desel_all.setIcon(icono("uncheck_all",c))
         self.a_quitar.setIcon(icono("remove",         c))
+
+    def _abrir_editor_temas(self):
+        dlg = ThemeEditor(self, PALETAS)
+        dlg.tema_aplicado.connect(self._on_tema_preview)
+        dlg.tema_guardado.connect(self._on_tema_guardado)
+        dlg.exec()
+
+    def _on_tema_preview(self, nombre: str, paleta: dict):
+        """Aplica una paleta en vivo desde el editor sin guardar en config."""
+        # Inyectar temporalmente la paleta en PALETAS para que _aplicar_estilos_tema la use
+        PALETAS[f"__preview__"] = paleta
+        cfg_temp = {**self._cfg, "tema": "__preview__"}
+        self._cfg_preview = cfg_temp
+        self._aplicar_estilos_tema_con(paleta)
+        self._actualizar_iconos_tema_con(paleta)
+
+    def _on_tema_guardado(self, nombre: str):
+        """Cuando se guarda un tema custom, lo agrega a PALETAS y actualiza config_dialog."""
+        custom = cargar_custom_themes()
+        if nombre in custom:
+            PALETAS[nombre] = custom[nombre]
+
+    def _aplicar_estilos_tema_con(self, p: dict):
+        """Aplica estilos usando una paleta directa (sin leer self._cfg)."""
+        self._preview.set_acento(p.get("acento", "#3c7bd4"))
+        self.setStyleSheet(self._generar_qss(p))
+
+    def _actualizar_iconos_tema_con(self, p: dict):
+        c = p.get("fg", "#eff0f1")
+        self.a_add.setIcon(icono("add",               c))
+        self.a_open_dir.setIcon(icono("folder",       c))
+        self.a_limpiar_todo.setIcon(icono("trash",    c))
+        self.a_run.setIcon(icono("play",               p.get("acento", c)))
+        self.a_stop.setIcon(icono("stop",              "#e74c3c"))
+        self.a_sel_all.setIcon(icono("check_all",     c))
+        self.a_desel_all.setIcon(icono("uncheck_all", c))
+        self.a_quitar.setIcon(icono("remove",          c))
 
     def _abrir_carpeta_salida(self):
         outdir = self._cfg.get("output_dir", os.path.expanduser("~"))
