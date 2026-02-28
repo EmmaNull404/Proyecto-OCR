@@ -44,6 +44,7 @@ PALETAS = {
         "head":   "#2d2d2d",
         "alt":    "#252525",
         "acento": "#3c7bd4",
+        "hover":  "#2a5fa8",   # azul más oscuro al hover
     },
     "Selva": {
         "bg":     "#0a1a0a",
@@ -52,6 +53,7 @@ PALETAS = {
         "head":   "#122a12",
         "alt":    "#0d200d",
         "acento": "#3d7a3d",
+        "hover":  "#ff6b2b",   # naranja lava al hover (el volcán 🌋)
     },
     "Claro": {
         "bg":     "#f5f5f5",
@@ -59,7 +61,8 @@ PALETAS = {
         "brd":    "#cccccc",
         "head":   "#e8e8e8",
         "alt":    "#fafafa",
-        "acento": "#2563c7",
+        "acento": "#8e44ad",
+        "hover":  "#6c3483",   # morado oscuro al hover
     },
 }
 
@@ -80,7 +83,7 @@ class PreviewPlaceholder(QWidget):
         self._acento = color
         self.update()
 
-    def set_archivo(self, ruta: str | None):
+    def set_archivo(self, ruta):
         self._archivo = ruta
         self.update()
 
@@ -145,13 +148,11 @@ class MainWindow(QMainWindow):
         self._timer.timeout.connect(self._tick_timer)
 
         self.setWindowTitle("Local OCR Pro")
-
         self.setMinimumSize(350, 500)
-        # self.resize(1200, 750)
         self.setWindowIcon(cargar_icono())
         self._settings = QSettings("Emmanuel", "ProyectoOCR")
 
-        # Construir widgets antes de _build_ui para que estén disponibles
+        # Construir widgets antes de _build_ui
         self._texto   = QTextEdit()
         self._preview = PreviewPlaceholder()
 
@@ -164,9 +165,7 @@ class MainWindow(QMainWindow):
         self._tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self._tree.header().resizeSection(1, 110)
         self._tree.setColumnHidden(2, True)
-        # Clic en fila -> actualiza preview
         self._tree.currentItemChanged.connect(self._on_item_seleccionado)
-        # Drag & Drop
         self._tree.setAcceptDrops(True)
         self._tree.dragEnterEvent = self._drag_enter
         self._tree.dragMoveEvent  = lambda e: e.accept()
@@ -181,9 +180,7 @@ class MainWindow(QMainWindow):
         self._settings.setValue("window_geometry", self.saveGeometry())
         super().closeEvent(event)
 
-    # ────────────────────────────────────────────────────────────
-    #  CORRECCIÓN 1: QSS forzado por tema — elimina fondo blanco
-    # ────────────────────────────────────────────────────────────
+    # ── Estilos de tema ──────────────────────────────────────────
     def _aplicar_estilos_tema(self):
         tema = self._cfg.get("tema", "Oscuro")
         p    = PALETAS.get(tema, PALETAS["Oscuro"])
@@ -229,7 +226,7 @@ class MainWindow(QMainWindow):
                 padding: 4px 8px;
             }}
             QToolButton:hover {{
-                background-color: {p['acento']};
+                background-color: {p['hover']};
                 color: white;
             }}
             QPushButton {{
@@ -240,10 +237,8 @@ class MainWindow(QMainWindow):
                 padding: 6px 16px;
                 font-weight: bold;
             }}
-            QPushButton:hover  {{ background-color: #ff551b; color: {p['fg']}; }}
-                        QPushButton:disabled {{ background-color: {p['brd']}; color: #777; }}
-
-            /* ── CORRECCIÓN CLAVE: QTreeWidget sin fondo blanco ── */
+            QPushButton:hover  {{ background-color: {p['hover']}; color: white; }}
+            QPushButton:disabled {{ background-color: {p['brd']}; color: #777; }}
             QTreeWidget {{
                 background-color: {p['bg']};
                 alternate-background-color: {p['alt']};
@@ -263,7 +258,6 @@ class MainWindow(QMainWindow):
             QTreeWidget::item:hover:!selected {{
                 background-color: {p['alt']};
             }}
-            /* ── CORRECCIÓN CLAVE: cabecera sin fondo blanco ── */
             QHeaderView {{
                 background-color: {p['head']};
                 color: {p['fg']};
@@ -278,7 +272,6 @@ class MainWindow(QMainWindow):
             QHeaderView::section:checked {{
                 background-color: {p['acento']};
             }}
-
             QTextEdit, QPlainTextEdit {{
                 background-color: {p['bg']};
                 color: {p['fg']};
@@ -360,40 +353,32 @@ class MainWindow(QMainWindow):
             }}
         """)
 
-    # ────────────────────────────────────────────────────────────
-    #  BUILD UI
-    # ────────────────────────────────────────────────────────────
+    # ── Build UI ─────────────────────────────────────────────────
     def _build_ui(self):
-        # Acción: Añadir
         self.a_add = QAction(icono("add"), "Añadir Archivos", self)
         self.a_add.setShortcut("Ctrl+O")
         self.a_add.setToolTip("Añadir archivos a la lista (Ctrl+O)")
         self.a_add.triggered.connect(self._abrir)
 
-        # Acción: Carpeta salida
         self.a_open_dir = QAction(icono("folder"), "Carpeta de Salida", self)
         self.a_open_dir.setToolTip("Abrir carpeta de resultados")
         self.a_open_dir.triggered.connect(self._abrir_carpeta_salida)
 
-        # Acción: Limpiar todo
         self.a_limpiar_todo = QAction(icono("trash"), "Limpiar Todo", self)
         self.a_limpiar_todo.setToolTip("Borrar lista y texto extraído")
         self.a_limpiar_todo.triggered.connect(self._limpiar_todo)
 
-        # Acción: Procesar
         self.a_run = QAction(icono("play"), "Procesar", self)
         self.a_run.setShortcut("F5")
         self.a_run.setToolTip("Iniciar OCR de archivos marcados (F5)")
         self.a_run.setEnabled(False)
         self.a_run.triggered.connect(self._procesar_lote)
 
-        # Acción: Detener
         self.a_stop = QAction(icono("stop"), "Detener", self)
         self.a_stop.setToolTip("Detener el proceso actual")
         self.a_stop.setEnabled(False)
         self.a_stop.triggered.connect(self._detener)
 
-        # Botones de selección — iconos vectoriales
         self.a_sel_all = QAction(icono("check_all"), "Marcar Todos", self)
         self.a_sel_all.setToolTip("Marcar todos los archivos")
         self.a_sel_all.triggered.connect(
@@ -408,22 +393,19 @@ class MainWindow(QMainWindow):
         self.a_quitar.setToolTip("Eliminar de la lista los archivos marcados")
         self.a_quitar.triggered.connect(self._quitar_seleccionados)
 
-        # Acciones de texto
         self.a_copy_all = QAction("Copiar Todo", self)
         self.a_copy_all.triggered.connect(
             lambda: self._app.clipboard().setText(self._texto.toPlainText()))
         self.a_clear_txt = QAction("Limpiar Pantalla", self)
         self.a_clear_txt.triggered.connect(self._texto.clear)
 
-        # ── Menús (réplica completa para teclado) ────────────────
+        # Menús
         mb = self.menuBar()
-
         m_arch = mb.addMenu("&Archivo")
         m_arch.addActions([self.a_add, self.a_open_dir, self.a_limpiar_todo])
         m_arch.addSeparator()
         m_arch.addAction("Salir", self.close)
 
-        # Menú Editar incluye los 3 botones de selección
         m_edit = mb.addMenu("&Editar")
         m_edit.addActions([self.a_sel_all, self.a_desel_all, self.a_quitar])
         m_edit.addSeparator()
@@ -436,7 +418,7 @@ class MainWindow(QMainWindow):
             "Preferencias...", self._abrir_config)
         mb.addMenu("Ay&uda").addAction("Acerca de...", self._acerca)
 
-        # ── Toolbar (todos los botones de selección incluidos) ────
+        # Toolbar
         tb = self.addToolBar("Acciones")
         tb.setMovable(False)
         tb.setIconSize(QSize(28, 28))
@@ -444,10 +426,9 @@ class MainWindow(QMainWindow):
         tb.addSeparator()
         tb.addActions([self.a_run, self.a_stop])
         tb.addSeparator()
-        # ── CORRECCIÓN 2: los 3 botones de selección en toolbar ──
         tb.addActions([self.a_sel_all, self.a_desel_all, self.a_quitar])
 
-        # ── Cuerpo central ───────────────────────────────────────
+        # Cuerpo central
         central = QWidget()
         self.setCentralWidget(central)
         lay = QVBoxLayout(central)
@@ -456,7 +437,6 @@ class MainWindow(QMainWindow):
 
         self._splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Panel izquierdo: árbol + placeholder
         left = QWidget()
         left_lay = QVBoxLayout(left)
         left_lay.setContentsMargins(0, 0, 0, 0)
@@ -466,7 +446,6 @@ class MainWindow(QMainWindow):
         left_lay.addWidget(self._preview, 3)
         self._splitter.addWidget(left)
 
-        # Panel derecho: texto extraído
         right = QWidget()
         right_lay = QVBoxLayout(right)
         right_lay.setContentsMargins(0, 0, 0, 0)
@@ -491,16 +470,15 @@ class MainWindow(QMainWindow):
         self._splitter.setStretchFactor(1, 1)
         lay.addWidget(self._splitter)
 
-        # 👇 ESTO VA AL FINAL
+        # Restaurar geometría guardada
         state = self._settings.value("splitter_state")
         if state:
             self._splitter.restoreState(state)
-
         geo = self._settings.value("window_geometry")
         if geo:
             self.restoreGeometry(geo)
 
-        # ── Status bar ───────────────────────────────────────────
+        # Status bar
         self._status_lbl = QLabel("Listo.")
         self._time_lbl   = QLabel("")
         self._time_lbl.setFixedWidth(310)
@@ -514,13 +492,13 @@ class MainWindow(QMainWindow):
         sb.addPermanentWidget(self._progress)
 
     # ── Drag & Drop ──────────────────────────────────────────────
-    def _drag_enter(self, event: QDragEnterEvent):
+    def _drag_enter(self, event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             event.ignore()
 
-    def _drop_archivos(self, event: QDropEvent):
+    def _drop_archivos(self, event):
         exts = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
         n = 0
         for url in event.mimeData().urls():
@@ -548,7 +526,6 @@ class MainWindow(QMainWindow):
             ruta = current.text(2)
             self._preview.set_archivo(ruta if ruta else None)
 
-    # ── CORRECCIÓN 3: todos marcados al añadir ───────────────────
     def _abrir(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Añadir archivos",
@@ -561,7 +538,7 @@ class MainWindow(QMainWindow):
                 if p not in self._items_map:
                     item = QTreeWidgetItem(
                         [os.path.basename(p), "Pendiente", p])
-                    item.setCheckState(0, Qt.CheckState.Checked)  # ← marcado por defecto
+                    item.setCheckState(0, Qt.CheckState.Checked)
                     self._tree.addTopLevelItem(item)
                     self._items_map[p] = item
                     n += 1
@@ -590,7 +567,6 @@ class MainWindow(QMainWindow):
 
     # ── Procesar lote ────────────────────────────────────────────
     def _procesar_lote(self):
-        # CORRECCIÓN 3: solo los que tienen checkbox marcado
         self._active_items = [
             self._tree.topLevelItem(i)
             for i in range(self._tree.topLevelItemCount())
@@ -633,15 +609,15 @@ class MainWindow(QMainWindow):
             lambda dur, it=item: self._on_archivo_terminado(dur, it))
         self._worker.start()
 
-    def _on_resultado(self, texto: str, item: QTreeWidgetItem):
+    def _on_resultado(self, texto, item):
         self._texto.append(
             f"\n{'─'*46}\n  {item.text(0)}\n{'─'*46}\n{texto}\n")
 
-    def _on_error_worker(self, msg: str, item: QTreeWidgetItem):
+    def _on_error_worker(self, msg, item):
         self._set_estado(item, "Error", "#c0392b")
         self._texto.append(f"\n[ERROR] {item.text(0)}:\n{msg}\n")
 
-    def _on_archivo_terminado(self, duracion: float, item: QTreeWidgetItem):
+    def _on_archivo_terminado(self, duracion, item):
         if self._is_stopping:
             return
         if item.text(1) != "Error":
@@ -649,27 +625,24 @@ class MainWindow(QMainWindow):
         self._current_idx += 1
         self._procesar_siguiente()
 
-    def _set_estado(self, item: QTreeWidgetItem, texto: str, color: str):
+    def _set_estado(self, item, texto, color):
         item.setText(1, texto)
         item.setBackground(1, QBrush(QColor(color)))
         item.setForeground(1, QBrush(QColor("white")))
 
-    # ── CORRECCIÓN 4: Detener → naranja; restantes → gris ────────
     def _detener(self):
         self._is_stopping = True
         if self._worker:
             self._worker.detener()
-        # El que estaba en curso → naranja "Detenido"
         if 0 <= self._current_idx < len(self._active_items):
             self._set_estado(
                 self._active_items[self._current_idx],
                 "Detenido", "#e67e22")
-        # Los que quedaron en cola → gris "Cancelado"
         for i in range(self._current_idx + 1, len(self._active_items)):
             self._set_estado(self._active_items[i], "Cancelado", "#7f8c8d")
         self._finalizar_lote(success=False)
 
-    def _finalizar_lote(self, success: bool):
+    def _finalizar_lote(self, success):
         self._timer.stop()
         self.a_run.setEnabled(True)
         self.a_stop.setEnabled(False)
@@ -696,7 +669,6 @@ class MainWindow(QMainWindow):
                 except Exception:
                     pass
 
-    # ── Timer de tiempo transcurrido ────────────────────────────
     def _tick_timer(self):
         elapsed = time.time() - self._t0
         total   = len(self._active_items)
@@ -710,7 +682,6 @@ class MainWindow(QMainWindow):
         else:
             self._time_lbl.setText(f"Transcurrido: {self._fmt(elapsed)}")
 
-    # ── Config ───────────────────────────────────────────────────
     def _abrir_config(self):
         dlg = ConfigDialog(self, self._cfg)
         dlg.config_guardada.connect(self._on_config_updated)
@@ -721,24 +692,22 @@ class MainWindow(QMainWindow):
             ))
         dlg.exec()
 
-    def _on_config_updated(self, cfg: dict):
+    def _on_config_updated(self, cfg):
         self._cfg = cfg
         self._aplicar_estilos_tema()
-        # Actualizar color de iconos según el nuevo tema
         self._actualizar_iconos_tema()
 
     def _actualizar_iconos_tema(self):
-        """Re-dibuja los iconos con el color del tema activo."""
-        p    = PALETAS.get(self._cfg.get("tema", "Oscuro"), PALETAS["Oscuro"])
-        c    = p["fg"]
-        self.a_add.setIcon(icono("add",          c))
-        self.a_open_dir.setIcon(icono("folder",  c))
-        self.a_limpiar_todo.setIcon(icono("trash", c))
-        self.a_run.setIcon(icono("play",          p["acento"]))
-        self.a_stop.setIcon(icono("stop",         "#e74c3c"))
-        self.a_sel_all.setIcon(icono("check_all", c))
-        self.a_desel_all.setIcon(icono("uncheck_all", c))
-        self.a_quitar.setIcon(icono("remove",     c))
+        p = PALETAS.get(self._cfg.get("tema", "Oscuro"), PALETAS["Oscuro"])
+        c = p["fg"]
+        self.a_add.setIcon(icono("add",              c))
+        self.a_open_dir.setIcon(icono("folder",      c))
+        self.a_limpiar_todo.setIcon(icono("trash",   c))
+        self.a_run.setIcon(icono("play",              p["acento"]))
+        self.a_stop.setIcon(icono("stop",             "#e74c3c"))
+        self.a_sel_all.setIcon(icono("check_all",    c))
+        self.a_desel_all.setIcon(icono("uncheck_all",c))
+        self.a_quitar.setIcon(icono("remove",         c))
 
     def _abrir_carpeta_salida(self):
         outdir = self._cfg.get("output_dir", os.path.expanduser("~"))
@@ -752,11 +721,10 @@ class MainWindow(QMainWindow):
                 f"La carpeta configurada no existe:\n{outdir}\n\n"
                 "Cámbiala en Configuración › Preferencias.")
 
-    # ── Helpers ─────────────────────────────────────────────────
-    def _status(self, txt: str):
+    def _status(self, txt):
         self._status_lbl.setText(txt)
 
-    def _fmt(self, seg: float) -> str:
+    def _fmt(self, seg):
         seg = int(seg)
         m, s = divmod(seg, 60)
         h, m = divmod(m, 60)
