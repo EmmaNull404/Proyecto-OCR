@@ -3,50 +3,50 @@
 ```markdown
 # Proyecto OCR Local en Python
 
-Aplicación de **Reconocimiento Óptico de Caracteres (OCR)** que funciona de forma
-local, con interfaz gráfica, diseñada con una arquitectura modular y escalable.
+AplicaciÃ³n de **Reconocimiento Ã“ptico de Caracteres (OCR)** que funciona de forma
+local, con interfaz grÃ¡fica, diseÃ±ada con una arquitectura modular y escalable.
 
-El proyecto separa claramente la lógica de OCR, la interfaz gráfica y los recursos,
+El proyecto separa claramente la lÃ³gica de OCR, la interfaz grÃ¡fica y los recursos,
 facilitando el mantenimiento y futuras mejoras.
 
 ---
 
-## ?? Objetivo del proyecto
-- Extraer texto desde imágenes de forma local
+## ğŸ¯ Objetivo del proyecto
+- Extraer texto desde imÃ¡genes de forma local
 - No depender de servicios en la nube
-- Ofrecer una interfaz gráfica clara y configurable
-- Permitir evolución por fases
+- Ofrecer una interfaz grÃ¡fica clara y configurable
+- Permitir evoluciÃ³n por fases
 
 ---
 
-## ?? Arquitectura general
+## ğŸ§  Arquitectura general
 
 El proyecto sigue una estructura por capas:
 
-- **Core**: lógica de negocio y OCR
-- **GUI**: interfaz gráfica y eventos
-- **Assets**: recursos, temas y configuración
-- **Main**: punto de entrada y orquestación
+- **Core**: lÃ³gica de negocio y OCR
+- **GUI**: interfaz grÃ¡fica y eventos
+- **Assets**: recursos, temas y configuraciÃ³n
+- **Main**: punto de entrada y orquestaciÃ³n
 
 ---
 
-## ??? Estructura del proyecto
+## ğŸ—‚ï¸ Estructura del proyecto
 
 ```
 
 assets/
-+- config_default.json    Configuración base (solo lectura)
-+- themes/
-+- themes.py           Gestión de temas visuales
+â”œâ”€ config_default.json    ConfiguraciÃ³n base (solo lectura)
+â””â”€ themes/
+â””â”€ themes.py           GestiÃ³n de temas visuales
 
 core/
-+- utils.py               Utilidades generales
-+- ocr_engine.py          Motor OCR y procesamiento principal
+â”œâ”€ utils.py               Utilidades generales
+â””â”€ ocr_engine.py          Motor OCR y procesamiento principal
 
 gui/
-+- icons.py               Iconos vectoriales dinámicos
-+- config_dialog.py       Ventana de configuración
-+- main_window.py         Ventana principal de la aplicación
+â”œâ”€ icons.py               Iconos vectoriales dinÃ¡micos
+â”œâ”€ config_dialog.py       Ventana de configuraciÃ³n
+â””â”€ main_window.py         Ventana principal de la aplicaciÃ³n
 
 main.py                    Punto de entrada del sistema
 
@@ -54,36 +54,36 @@ main.py                    Punto de entrada del sistema
 
 ---
 
-## ?? Descripción de módulos clave
+## ğŸ”§ DescripciÃ³n de mÃ³dulos clave
 
 ### `main.py`
-- Inicializa la aplicación
-- Carga configuración y tema
+- Inicializa la aplicaciÃ³n
+- Carga configuraciÃ³n y tema
 - Lanza la ventana principal
 
 ### `core/ocr_engine.py`
 - Ejecuta el proceso OCR
-- Emite señales de:
+- Emite seÃ±ales de:
   - progreso
   - resultado
   - error
-  - término de proceso
-- Preparado para ejecución en segundo plano (fase 2)
+  - tÃ©rmino de proceso
+- Preparado para ejecuciÃ³n en segundo plano (fase 2)
 
 ### `gui/main_window.py`
 - Ventana principal
-- Gestión visual del flujo OCR
-- Actualización dinámica de iconos y estado
+- GestiÃ³n visual del flujo OCR
+- ActualizaciÃ³n dinÃ¡mica de iconos y estado
 
 ### `gui/config_dialog.py`
 - Preferencias del sistema
 - Tema, rutas, DPI, idioma
-- Emite señales al actualizar configuración
+- Emite seÃ±ales al actualizar configuraciÃ³n
 
 ---
 
-## ?? Señales y comunicación
-El sistema usa un modelo de **señales** para desacoplar lógica y GUI:
+## ğŸ”Œ SeÃ±ales y comunicaciÃ³n
+El sistema usa un modelo de **seÃ±ales** para desacoplar lÃ³gica y GUI:
 
 - `progreso(int)`
 - `resultado(str)`
@@ -95,33 +95,32 @@ Esto permite escalar sin romper la interfaz.
 
 ---
 
-## ?? Estado del proyecto
-- **Fase 1**: Arquitectura base y GUI ? ? Completa
-- **Fase 2**: OCR real, threading y mejoras ? ?? Planeada
+## ğŸš¦ Estado del proyecto
+- **Fase 1**: Arquitectura base y GUI â†’ âœ… Completa
+- **Fase 2**: OCR real, threading y mejoras â†’ ğŸ”œ Planeada
 
 ---
 
-## ?? Ejecución
+## â–¶ï¸ EjecuciÃ³n
 ```bash
 python main.py
 ````
 
 ---
 
-## ??? Tecnologías
+## ğŸ› ï¸ TecnologÃ­as
 
 * Python
 * OCR local (Tesseract u otro motor)
-* Qt / PyQt (interfaz gráfica)
-* JSON para configuración
+* Qt / PyQt (interfaz grÃ¡fica)
+* JSON para configuraciÃ³n
 
 ---
 
-## ?? Autor
+## ğŸ‘¤ Autor
 
 Emmanuel
 
 ```
 
 ---
-
