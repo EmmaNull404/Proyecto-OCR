@@ -45,7 +45,7 @@ class ConfigDialog(QDialog):
 
         form = QFormLayout()
         form.setSpacing(8)
-        form.setLabelAlignment(Qt.AlignRight)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         # ── Rutas ──
         self._inp_tess = QLineEdit(self._cfg.get("tesseract_path", ""))
