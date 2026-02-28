@@ -1,0 +1,10 @@
+{
+    "tema":           "Oscuro",
+    "output_dir":     "",
+    "tesseract_path": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe",
+    "poppler_path":   "C:\\Program Files\\ChuyOCR\\poppler-25.12.0\\Library\\bin",
+    "lang":           "spa+eng",
+    "dpi":            "300",
+    "modo_salida":    "Ambas (PDF + Texto)",
+    "abrir_carpeta":  true
+}
